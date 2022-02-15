@@ -17,7 +17,7 @@ setup(
     long_description_content_type="text/markdown",
     author="singchen",
     author_email="xhqsm@qq.com",
-    url="https://gitee.com/xhqsm/tsvkit/",
+    url="https://github.com/5xc/tsvkit/",
     packages=find_packages(),
     entry_points={"console_scripts": ["tsvkit=tsvkit:main"]},
 )

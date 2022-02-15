@@ -5,16 +5,18 @@ TSV toolkit
 ## Install
 
 ```
-pip install tsvkit==0.1.0
+pip install tsvkit==0.2.0
 ```
 
 ## Usage
 
 ```
 $ tsvkit --help
-usage: tsvkit [-h] [-H] [-v] [-s] [-p PATTERN] [-l LIMIT] [-n NLINES] [-c COLUMN] [-V] [input]
+usage: tsvkit [-h] [-H] [-v] [-s] [-p PATTERN] [-a ADD] [-l LIMIT] [-n NLINES] [-c COLUMN]
+              [-V]
+              [input]
 
-TSV toolkit 0.1.0
+TSV toolkit 0.2.0
 
 positional arguments:
   input                 file to parse, tab-delimited, default: stdin
@@ -26,6 +28,7 @@ optional arguments:
   -s, --stat            descriptive statistics
   -p PATTERN, --pattern PATTERN
                         pattern to match, wrap in single quotes
+  -a ADD, --add ADD     add a new column with pattern, wrap in single quotes
   -l LIMIT, --limit LIMIT
                         limit of column width, used with -v, default: 100
   -n NLINES, --nlines NLINES
@@ -124,5 +127,21 @@ instant  weekday  workingday  weathersit  temp      atemp     hum       windspee
 13       4        1           1           0.165     0.150883  0.470417  0.301      38      1368        1406
 14       5        1           1           0.16087   0.188413  0.537826  0.126548   54      1367        1421
 17       1        0           2           0.175833  0.176771  0.5375    0.194017   117     883         1000
+```
+
+### add a new column with pattern
+
+```
+$ cat data.tsv | tsvkit -H -a 'int($1)+int($2)' -v | head
+instant  weekday  workingday  weathersit  temp       atemp      hum       windspeed  casual  registered  cnt   int($1)+int($2)
+1        6        0           2           0.344167   0.363625   0.805833  0.160446   331     654         985   7
+2        0        0           2           0.363478   0.353739   0.696087  0.248539   131     670         801   2
+3        1        1           1           0.196364   0.189405   0.437273  0.248309   120     1229        1349  4
+4        2        1           1           0.2        0.212122   0.590435  0.160296   108     1454        1562  6
+5        3        1           1           0.226957   0.22927    0.436957  0.1869     82      1518        1600  8
+6        4        1           1           0.204348   0.233209   0.518261  0.0895652  88      1518        1606  10
+7        5        1           2           0.196522   0.208839   0.498696  0.168726   148     1362        1510  12
+8        6        0           2           0.165      0.162254   0.535833  0.266804   68      891         959   14
+9        0        0           1           0.138333   0.116175   0.434167  0.36195    54      768         822   9
 ```
 
