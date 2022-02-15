@@ -4,7 +4,7 @@ import re
 import sys
 from collections import defaultdict
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 
 if sys.platform != "win32":
     import signal
@@ -130,6 +130,16 @@ def add_column(file, pattern: str, header: bool):
             pass
 
 
+def reorder_columns(file, columns: str):
+    columns = columns.split(",")
+    for line in file:
+        row = line.strip().split("\t")
+        out_row = []
+        for index in columns:
+            out_row.append(row[int(index) - 1])
+        yield "\t".join(out_row)
+
+
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description="TSV toolkit {}".format(__version__))
     parser.add_argument("input", nargs="?", type=argparse.FileType("r"), default=sys.stdin, help="file to parse, tab-delimited, default: stdin")
@@ -138,6 +148,7 @@ def main():
     parser.add_argument("-s", "--stat", action="store_true", help="descriptive statistics")
     parser.add_argument("-p", "--pattern", type=str, help="pattern to match, wrap in single quotes")
     parser.add_argument("-a", "--add", type=str, help="add a new column with pattern, wrap in single quotes")
+    parser.add_argument("-r", "--reorder", type=str, help="reorder columns, comma separated list of column numbers")
     parser.add_argument("-l", "--limit", type=int, default=100, help="limit of column width, used with -v, default: 100")
     parser.add_argument("-n", "--nlines", type=int, default=100, help="max number of lines to view, used with -v, default: 100")
     parser.add_argument("-c", "--column", type=int, default=0, help="column number to match (1-based), used with -s, default: 0, means all columns")
@@ -148,11 +159,13 @@ def main():
         file = get_pattern(file, args.pattern, args.header)
     if args.add:
         file = add_column(file, args.add, args.header)
+    if args.reorder:
+        file = reorder_columns(file, args.reorder)
     if args.stat:
         file = get_stats(file, args.header, args.column)
     if args.view:
         file = get_view(file, args.limit, args.nlines)
-    if not (args.stat or args.view or args.pattern or args.add):
+    if not (args.stat or args.view or args.pattern or args.add or args.reorder):
         if args.header:
             file = get_header(file)
         else:

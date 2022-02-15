@@ -1,22 +1,20 @@
 # tsvkit
 
-TSV toolkit
+TSV toolkit: print header, aligned display, descriptive statistics, pattern match, add column, reorder columns
 
 ## Install
 
 ```
-pip install tsvkit==0.2.0
+pip install tsvkit==0.3.0
 ```
 
 ## Usage
 
 ```
 $ tsvkit --help
-usage: tsvkit [-h] [-H] [-v] [-s] [-p PATTERN] [-a ADD] [-l LIMIT] [-n NLINES] [-c COLUMN]
-              [-V]
-              [input]
+usage: tsvkit [-h] [-H] [-v] [-s] [-p PATTERN] [-a ADD] [-r REORDER] [-l LIMIT] [-n NLINES] [-c COLUMN] [-V] [input]
 
-TSV toolkit 0.2.0
+TSV toolkit 0.3.0
 
 positional arguments:
   input                 file to parse, tab-delimited, default: stdin
@@ -29,6 +27,8 @@ optional arguments:
   -p PATTERN, --pattern PATTERN
                         pattern to match, wrap in single quotes
   -a ADD, --add ADD     add a new column with pattern, wrap in single quotes
+  -r REORDER, --reorder REORDER
+                        reorder columns, comma separated list of column numbers
   -l LIMIT, --limit LIMIT
                         limit of column width, used with -v, default: 100
   -n NLINES, --nlines NLINES
@@ -143,5 +143,21 @@ instant  weekday  workingday  weathersit  temp       atemp      hum       windsp
 7        5        1           2           0.196522   0.208839   0.498696  0.168726   148     1362        1510  12
 8        6        0           2           0.165      0.162254   0.535833  0.266804   68      891         959   14
 9        0        0           1           0.138333   0.116175   0.434167  0.36195    54      768         822   9
+```
+
+### reorder columns
+
+```
+$ cat data.tsv | tsvkit -r 2,3,1,1 -v | head
+weekday  workingday  instant  instant
+6        0           1        1
+0        0           2        2
+1        1           3        3
+2        1           4        4
+3        1           5        5
+4        1           6        6
+5        1           7        7
+6        0           8        8
+0        0           9        9
 ```
 
