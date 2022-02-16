@@ -1,10 +1,14 @@
 import argparse
+import csv
 import math
 import re
 import sys
 from collections import defaultdict
 
-__version__ = "0.3.0"
+from openpyxl import load_workbook
+from xlrd import open_workbook
+
+__version__ = "0.4.0"
 
 if sys.platform != "win32":
     import signal
@@ -140,9 +144,29 @@ def reorder_columns(file, columns: str):
         yield "\t".join(out_row)
 
 
+def get_file(file):
+    if not file:
+        file = sys.stdin
+    else:
+        if file.endswith(".xlsx"):
+            wb = load_workbook(file, read_only=True)
+            ws = wb.active
+            file = ("\t".join([str(_.value) for _ in row]) for row in ws.rows)
+        elif file.endswith(".xls"):
+            wb = open_workbook(file, on_demand=True)
+            ws = wb.sheet_by_index(0)
+            file = ("\t".join([str(_.value) for _ in row]) for row in ws.get_rows())
+        elif file.endswith(".csv"):
+            reader = csv.reader(open(file, "r"))
+            file = ("\t".join(row) for row in reader)
+        else:
+            file = open(file, "r")
+    return file
+
+
 def main():
     parser = argparse.ArgumentParser(formatter_class=argparse.RawTextHelpFormatter, description="TSV toolkit {}".format(__version__))
-    parser.add_argument("input", nargs="?", type=argparse.FileType("r"), default=sys.stdin, help="file to parse, tab-delimited, default: stdin")
+    parser.add_argument("input", nargs="?", type=str, help="file to parse, tab-delimited, default: stdin")
     parser.add_argument("-H", "--header", action="store_true", help="print header or include header in the output")
     parser.add_argument("-v", "--view", action="store_true", help="aligned display of each column")
     parser.add_argument("-s", "--stat", action="store_true", help="descriptive statistics")
@@ -151,10 +175,15 @@ def main():
     parser.add_argument("-r", "--reorder", type=str, help="reorder columns, comma separated list of column numbers")
     parser.add_argument("-l", "--limit", type=int, default=100, help="limit of column width, used with -v, default: 100")
     parser.add_argument("-n", "--nlines", type=int, default=100, help="max number of lines to view, used with -v, default: 100")
-    parser.add_argument("-c", "--column", type=int, default=0, help="column number to match (1-based), used with -s, default: 0, means all columns")
+    parser.add_argument("-c", "--column", type=int, default=0, help="column number to stat, used with -s, default: 0, means all columns")
     parser.add_argument("-V", "--version", action="version", version=__version__)
     args = parser.parse_args()
-    file = args.input
+    file = get_file(args.input)
+    if not (args.stat or args.view or args.pattern or args.add or args.reorder):
+        if args.header:
+            file = get_header(file)
+        else:
+            sys.exit(parser.print_help())
     if args.pattern:
         file = get_pattern(file, args.pattern, args.header)
     if args.add:
@@ -165,11 +194,6 @@ def main():
         file = get_stats(file, args.header, args.column)
     if args.view:
         file = get_view(file, args.limit, args.nlines)
-    if not (args.stat or args.view or args.pattern or args.add or args.reorder):
-        if args.header:
-            file = get_header(file)
-        else:
-            sys.exit(parser.print_help())
     for line in file:
         print(line.strip())
 

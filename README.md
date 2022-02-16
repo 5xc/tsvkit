@@ -1,11 +1,11 @@
 # tsvkit
 
-TSV toolkit: print header, aligned display, descriptive statistics, pattern match, add column, reorder columns
+TSV toolkit: print header, aligned display, descriptive statistics, pattern match, add a column, reorder columns, supports TSV, CSV, XLS and XLSX
 
 ## Install
 
 ```
-pip install tsvkit==0.3.0
+pip install tsvkit==0.4.0
 ```
 
 ## Usage
@@ -14,7 +14,7 @@ pip install tsvkit==0.3.0
 $ tsvkit --help
 usage: tsvkit [-h] [-H] [-v] [-s] [-p PATTERN] [-a ADD] [-r REORDER] [-l LIMIT] [-n NLINES] [-c COLUMN] [-V] [input]
 
-TSV toolkit 0.3.0
+TSV toolkit 0.4.0
 
 positional arguments:
   input                 file to parse, tab-delimited, default: stdin
@@ -34,7 +34,7 @@ optional arguments:
   -n NLINES, --nlines NLINES
                         max number of lines to view, used with -v, default: 100
   -c COLUMN, --column COLUMN
-                        column number to match (1-based), used with -s, default: 0, means all columns
+                        column number to stat, used with -s, default: 0, means all columns
   -V, --version         show program's version number and exit
 ```
 
@@ -149,6 +149,22 @@ instant  weekday  workingday  weathersit  temp       atemp      hum       windsp
 
 ```
 $ cat data.tsv | tsvkit -r 2,3,1,1 -v | head
+weekday  workingday  instant  instant
+6        0           1        1
+0        0           2        2
+1        1           3        3
+2        1           4        4
+3        1           5        5
+4        1           6        6
+5        1           7        7
+6        0           8        8
+0        0           9        9
+```
+
+###  all functions support CSV, XLS and XLSX, by specifying the file name
+
+```
+$ tsvkit data.xlsx -r 2,3,1,1 -v | head
 weekday  workingday  instant  instant
 6        0           1        1
 0        0           2        2
