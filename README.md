@@ -5,16 +5,16 @@ TSV toolkit: print header, aligned display, descriptive statistics, pattern matc
 ## Install
 
 ```
-pip install tsvkit==0.4.0
+pip install tsvkit==0.5.3
 ```
 
 ## Usage
 
 ```
 $ tsvkit --help
-usage: tsvkit [-h] [-H] [-v] [-s] [-p PATTERN] [-a ADD] [-r REORDER] [-l LIMIT] [-n NLINES] [-c COLUMN] [-V] [input]
+usage: tsvkit [-h] [-H] [-v] [-s] [-p PATTERN] [-a ADD] [-r REORDER] [-w WIDTH] [-n NLINES] [-V] [input]
 
-TSV toolkit 0.4.0
+TSV toolkit 0.5.3
 
 positional arguments:
   input                 file to parse, tab-delimited, default: stdin
@@ -29,12 +29,10 @@ optional arguments:
   -a ADD, --add ADD     add a new column with pattern, wrap in single quotes
   -r REORDER, --reorder REORDER
                         reorder columns, comma separated list of column numbers
-  -l LIMIT, --limit LIMIT
+  -w WIDTH, --width WIDTH
                         limit of column width, used with -v, default: 100
   -n NLINES, --nlines NLINES
-                        max number of lines to view, used with -v, default: 100
-  -c COLUMN, --column COLUMN
-                        column number to stat, used with -s, default: 0, means all columns
+                        max number of lines to view, used with -v, 0 for unlimited, default: 100
   -V, --version         show program's version number and exit
 ```
 
@@ -86,7 +84,7 @@ instant  weekday  workingday  weathersit  temp      atemp     hum       windspee
 8        6        0           2           0.165     0.162254  0.535833  0.266804   68      891         959
 9        0        0           1           0.138333  0.116175  0.434167  0.36195    54      768         822
 
-$ head data.tsv | tsvkit -v -l 5
+$ head data.tsv | tsvkit -v -w 5
 insta  weekd  worki  weath  temp   atemp  hum    winds  casua  regis  cnt
 1      6      0      2      0.344  0.363  0.805  0.160  331    654    985
 2      0      0      2      0.363  0.353  0.696  0.248  131    670    801
@@ -103,13 +101,13 @@ insta  weekd  worki  weath  temp   atemp  hum    winds  casua  regis  cnt
 
 ```
 $ tsvkit -s -H -v data.tsv 
-column  instant  weekday  workingday  weathersit  temp    atemp   hum     windspeed  casual    registered  cnt
-count   50       50       50          50          50      50      50      50         50        50          50
-min     1.0      0.0      0.0         1.0         0.0591  0.0791  0.1879  0.0454     9.0       416.0       431.0
-max     50.0     6.0      1.0         3.0         0.5217  0.512   0.9292  0.5075     579.0     2348.0      2927.0
-mean    25.5     3.06     0.68        1.4         0.2271  0.2327  0.5656  0.2088     136.98    1283.68     1420.66
-median  25.5     3.0      1.0         1.0         0.2078  0.226   0.5367  0.1914     90.5      1321.5      1486.5
-std     14.4309  2.024    0.4665      0.5292      0.0877  0.085   0.1515  0.092      123.3146  406.043     451.2542
+column  instant  weekday  workingday  weathersit  temp    atemp   hum     windspeed  casual  registered  cnt
+count   50       50       50          50          50      50      50      50         50      50          50
+min     1.0      0.0      0.0         1.0         0.0591  0.0791  0.1879  0.0454     9.0     416.0       431.0
+max     50.0     6.0      1.0         3.0         0.5217  0.512   0.9292  0.5075     579.0   2348.0      2927.0
+mean    25.5     3.06     0.68        1.4         0.2271  0.2327  0.5656  0.2088     136.98  1283.7      1420.7
+median  25.5     3.0      1.0         1.0         0.2078  0.226   0.5367  0.1914     90.5    1321.5      1486.5
+std     14.431   2.024    0.4665      0.5292      0.0877  0.085   0.1515  0.092      123.31  406.0       451.3
 ```
 
 ### pattern to match

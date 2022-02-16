@@ -8,7 +8,7 @@ from collections import defaultdict
 from openpyxl import load_workbook
 from xlrd import open_workbook
 
-__version__ = "0.4.0"
+__version__ = "0.5.3"
 
 if sys.platform != "win32":
     import signal
@@ -30,34 +30,24 @@ def is_float(value) -> bool:
         return False
 
 
-def get_stats(file, header: bool, column: int):
+def get_stats(file, header: bool):
     row = next(file).strip().split("\t")
+    dataframe = [[] for _ in range(len(row))]
     if header:
-        samples = [row[column - 1]] if column else row
+        columns = row
     else:
-        samples = [str(column)] if column else [str(_) for _ in range(1, len(row) + 1)]
-    array2D = [[] for _ in range(len(samples))]
-    if not header:
-        if column:
-            value = row[column - 1]
+        columns = [str(_) for _ in range(1, len(row) + 1)]
+        for i, value in enumerate(row):
             if is_float(value):
-                array2D[0].append(float(value))
-        else:
-            for i, value in enumerate(row):
-                if is_float(value):
-                    array2D[i].append(float(value))
+                dataframe[i].append(float(value))
     for line in file:
         row = line.strip().split("\t")
-        if column:
-            value = row[column - 1]
+        for i, value in enumerate(row):
             if is_float(value):
-                array2D[0].append(float(value))
-        else:
-            for i, value in enumerate(row):
-                if is_float(value):
-                    array2D[i].append(float(value))
+                dataframe[i].append(float(value))
     stats = defaultdict(list)
-    for i, array in enumerate(array2D):
+    na_columns = []
+    for i, array in enumerate(dataframe):
         if array:
             count = len(array)
             min_value = min(array)
@@ -66,37 +56,40 @@ def get_stats(file, header: bool, column: int):
             array.sort()
             median = array[count // 2] if count % 2 else (array[count // 2] + array[count // 2 - 1]) / 2
             std = math.sqrt(sum((_ - mean)**2 for _ in array) / count)
-            stats[samples[i]] = [count, round(min_value, 4), round(max_value, 4), round(mean, 4), round(median, 4), round(std, 4)]
+            if mean == 0:
+                n = 2
+            else:
+                n = max(min(4 - int(math.log10(mean)), 4), 1)
+            stats[columns[i]] = [count, round(min_value, n), round(max_value, n), round(mean, n), round(median, n), round(std, n)]
         else:
-            stats[samples[i]] = ["NA", "NA", "NA", "NA", "NA", "NA"]
-    yield "column\t" + "\t".join(samples)
-    yield "count \t" + "\t".join(map(str, [stats[sample][0] for sample in samples]))
-    yield "min   \t" + "\t".join(map(str, [stats[sample][1] for sample in samples]))
-    yield "max   \t" + "\t".join(map(str, [stats[sample][2] for sample in samples]))
-    yield "mean  \t" + "\t".join(map(str, [stats[sample][3] for sample in samples]))
-    yield "median\t" + "\t".join(map(str, [stats[sample][4] for sample in samples]))
-    yield "std   \t" + "\t".join(map(str, [stats[sample][5] for sample in samples]))
+            stats[columns[i]] = ["NA", "NA", "NA", "NA", "NA", "NA"]
+            na_columns.append(columns[i])
+    yield "column\t" + "\t".join([column for column in columns if column not in na_columns])
+    items = ["count", "min", "max", "mean", "median", "std"]
+    for i, item in enumerate(items):
+        out = "\t".join([str(stats[column][i]) for column in columns if stats[column][i] != "NA"])
+        yield f"{item:6s}\t{out}"
 
 
-def get_view(file, limit: int, nlines: int):
+def get_view(file, width: int, nlines: int):
     rows = []
-    width = []
+    widths = []
     for i, line in enumerate(file, start=1):
         row = line.strip().split("\t")
         for index, string in enumerate(row):
-            if len(width) <= index:
-                width.append(len(string))
-            width[index] = min(limit, max(len(string), width[index]))
+            if len(widths) <= index:
+                widths.append(len(string))
+            widths[index] = min(width, max(len(string), widths[index]))
         rows.append(row)
-        if i == nlines:
+        if nlines and i == nlines:
             break
     for row in rows:
         out_row = []
         for index, string in enumerate(row):
-            if len(string) < width[index]:
-                row[index] = string + " " * (width[index] - len(string))
+            if len(string) < widths[index]:
+                row[index] = string + " " * (widths[index] - len(string))
             else:
-                row[index] = string[:width[index]]
+                row[index] = string[:widths[index]]
             out_row.append(row[index])
         yield "  ".join(out_row)
 
@@ -149,7 +142,7 @@ def get_file(file):
         file = sys.stdin
     else:
         if file.endswith(".xlsx"):
-            wb = load_workbook(file, read_only=True)
+            wb = load_workbook(file, read_only=True, data_only=True)
             ws = wb.active
             file = ("\t".join([str(_.value) for _ in row]) for row in ws.rows)
         elif file.endswith(".xls"):
@@ -173,9 +166,8 @@ def main():
     parser.add_argument("-p", "--pattern", type=str, help="pattern to match, wrap in single quotes")
     parser.add_argument("-a", "--add", type=str, help="add a new column with pattern, wrap in single quotes")
     parser.add_argument("-r", "--reorder", type=str, help="reorder columns, comma separated list of column numbers")
-    parser.add_argument("-l", "--limit", type=int, default=100, help="limit of column width, used with -v, default: 100")
-    parser.add_argument("-n", "--nlines", type=int, default=100, help="max number of lines to view, used with -v, default: 100")
-    parser.add_argument("-c", "--column", type=int, default=0, help="column number to stat, used with -s, default: 0, means all columns")
+    parser.add_argument("-w", "--width", type=int, default=100, help="limit of column width, used with -v, default: 100")
+    parser.add_argument("-n", "--nlines", type=int, default=100, help="max number of lines to view, used with -v, 0 for unlimited, default: 100")
     parser.add_argument("-V", "--version", action="version", version=__version__)
     args = parser.parse_args()
     file = get_file(args.input)
@@ -191,9 +183,9 @@ def main():
     if args.reorder:
         file = reorder_columns(file, args.reorder)
     if args.stat:
-        file = get_stats(file, args.header, args.column)
+        file = get_stats(file, args.header)
     if args.view:
-        file = get_view(file, args.limit, args.nlines)
+        file = get_view(file, args.width, args.nlines)
     for line in file:
         print(line.strip())
 
