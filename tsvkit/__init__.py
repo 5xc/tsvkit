@@ -4,11 +4,13 @@ import math
 import re
 import sys
 from collections import defaultdict
+from datetime import datetime
+from unicodedata import east_asian_width
 
 from openpyxl import load_workbook
-from xlrd import open_workbook
+from xlrd import open_workbook, xldate_as_tuple
 
-__version__ = "0.5.3"
+__version__ = "0.5.4"
 
 if sys.platform != "win32":
     import signal
@@ -56,10 +58,7 @@ def get_stats(file, header: bool):
             array.sort()
             median = array[count // 2] if count % 2 else (array[count // 2] + array[count // 2 - 1]) / 2
             std = math.sqrt(sum((_ - mean)**2 for _ in array) / count)
-            if mean == 0:
-                n = 2
-            else:
-                n = max(min(4 - int(math.log10(mean)), 4), 1)
+            n = max(min(4 - int(math.log10(abs(mean))), 4), 1) if mean else 2
             stats[columns[i]] = [count, round(min_value, n), round(max_value, n), round(mean, n), round(median, n), round(std, n)]
         else:
             stats[columns[i]] = ["NA", "NA", "NA", "NA", "NA", "NA"]
@@ -71,23 +70,35 @@ def get_stats(file, header: bool):
         yield f"{item:6s}\t{out}"
 
 
+def get_length(string: str) -> int:
+    length = 0
+    for char in string:
+        if east_asian_width(char) in "FW":
+            length += 2
+        else:
+            length += 1
+    return length
+
+
 def get_view(file, width: int, nlines: int):
     rows = []
     widths = []
     for i, line in enumerate(file, start=1):
         row = line.strip().split("\t")
         for index, string in enumerate(row):
+            length = get_length(string)
             if len(widths) <= index:
-                widths.append(len(string))
-            widths[index] = min(width, max(len(string), widths[index]))
+                widths.append(length)
+            widths[index] = min(width, max(length, widths[index]))
         rows.append(row)
         if nlines and i == nlines:
             break
     for row in rows:
         out_row = []
         for index, string in enumerate(row):
-            if len(string) < widths[index]:
-                row[index] = string + " " * (widths[index] - len(string))
+            length = get_length(string)
+            if length < widths[index]:
+                row[index] = string + " " * (widths[index] - length)
             else:
                 row[index] = string[:widths[index]]
             out_row.append(row[index])
@@ -137,6 +148,23 @@ def reorder_columns(file, columns: str):
         yield "\t".join(out_row)
 
 
+def get_xls_file(file):
+    wb = open_workbook(file, on_demand=True)
+    ws = wb.sheet_by_index(0)
+    for row in ws.get_rows():
+        out_row = []
+        for cell in row:
+            value = cell.value
+            if cell.ctype == 2 and math.isclose(value, int(value)):
+                value = int(value)
+            elif cell.ctype == 3:
+                value = datetime(*xldate_as_tuple(value, wb.datemode))
+            elif cell.ctype == 4:
+                value = True if value else False
+            out_row.append(str(value))
+        yield "\t".join(out_row)
+
+
 def get_file(file):
     if not file:
         file = sys.stdin
@@ -146,9 +174,7 @@ def get_file(file):
             ws = wb.active
             file = ("\t".join([str(_.value) for _ in row]) for row in ws.rows)
         elif file.endswith(".xls"):
-            wb = open_workbook(file, on_demand=True)
-            ws = wb.sheet_by_index(0)
-            file = ("\t".join([str(_.value) for _ in row]) for row in ws.get_rows())
+            file = get_xls_file(file)
         elif file.endswith(".csv"):
             reader = csv.reader(open(file, "r"))
             file = ("\t".join(row) for row in reader)

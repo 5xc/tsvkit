@@ -2,19 +2,21 @@
 
 TSV toolkit: print header, aligned display, descriptive statistics, pattern match, add a column, reorder columns, supports TSV, CSV, XLS and XLSX
 
-## Install
+## Installation
 
 ```
-pip install tsvkit==0.5.3
+pip install tsvkit==0.5.4
 ```
 
 ## Usage
 
 ```
 $ tsvkit --help
-usage: tsvkit [-h] [-H] [-v] [-s] [-p PATTERN] [-a ADD] [-r REORDER] [-w WIDTH] [-n NLINES] [-V] [input]
+usage: tsvkit [-h] [-H] [-v] [-s] [-p PATTERN] [-a ADD] [-r REORDER]
+              [-w WIDTH] [-n NLINES] [-V]
+              [input]
 
-TSV toolkit 0.5.3
+TSV toolkit 0.5.4
 
 positional arguments:
   input                 file to parse, tab-delimited, default: stdin
@@ -39,7 +41,7 @@ optional arguments:
 ## Example
 
 ```
-$ head data.tsv 
+$ head data/data.tsv
 instant	weekday	workingday	weathersit	temp	atemp	hum	windspeed	casual	registered	cnt
 1	6	0	2	0.344167	0.363625	0.805833	0.160446	331	654	985
 2	0	0	2	0.363478	0.353739	0.696087	0.248539	131	670	801
@@ -55,7 +57,7 @@ instant	weekday	workingday	weathersit	temp	atemp	hum	windspeed	casual	registered
 ### print header or include header in output
 
 ```
-$ tsvkit -H data.tsv 
+$ tsvkit -H data/data.tsv
 1	instant
 2	weekday
 3	workingday
@@ -72,7 +74,7 @@ $ tsvkit -H data.tsv
 ### aligned display of each column
 
 ```
-$ head data.tsv | tsvkit -v
+$ head data/data.tsv | tsvkit -v
 instant  weekday  workingday  weathersit  temp      atemp     hum       windspeed  casual  registered  cnt
 1        6        0           2           0.344167  0.363625  0.805833  0.160446   331     654         985
 2        0        0           2           0.363478  0.353739  0.696087  0.248539   131     670         801
@@ -84,7 +86,7 @@ instant  weekday  workingday  weathersit  temp      atemp     hum       windspee
 8        6        0           2           0.165     0.162254  0.535833  0.266804   68      891         959
 9        0        0           1           0.138333  0.116175  0.434167  0.36195    54      768         822
 
-$ head data.tsv | tsvkit -v -w 5
+$ head data/data.tsv | tsvkit -v -w 5
 insta  weekd  worki  weath  temp   atemp  hum    winds  casua  regis  cnt
 1      6      0      2      0.344  0.363  0.805  0.160  331    654    985
 2      0      0      2      0.363  0.353  0.696  0.248  131    670    801
@@ -100,7 +102,7 @@ insta  weekd  worki  weath  temp   atemp  hum    winds  casua  regis  cnt
 ### descriptive statistics
 
 ```
-$ tsvkit -s -H -v data.tsv 
+$ tsvkit -s -H -v data/data.tsv
 column  instant  weekday  workingday  weathersit  temp    atemp   hum     windspeed  casual  registered  cnt
 count   50       50       50          50          50      50      50      50         50      50          50
 min     1.0      0.0      0.0         1.0         0.0591  0.0791  0.1879  0.0454     9.0     416.0       431.0
@@ -113,7 +115,7 @@ std     14.431   2.024    0.4665      0.5292      0.0877  0.085   0.1515  0.092 
 ### pattern to match
 
 ```
-$ cat data.tsv | tsvkit -p 'int($1)<20 and $5.startswith("0.1")' -v -H
+$ cat data/data.tsv | tsvkit -p 'int($1)<20 and $5.startswith("0.1")' -v -H
 instant  weekday  workingday  weathersit  temp      atemp     hum       windspeed  casual  registered  cnt
 3        1        1           1           0.196364  0.189405  0.437273  0.248309   120     1229        1349
 7        5        1           2           0.196522  0.208839  0.498696  0.168726   148     1362        1510
@@ -130,7 +132,7 @@ instant  weekday  workingday  weathersit  temp      atemp     hum       windspee
 ### add a new column with pattern
 
 ```
-$ cat data.tsv | tsvkit -H -a 'int($1)+int($2)' -v | head
+$ cat data/data.tsv | tsvkit -H -a 'int($1)+int($2)' -v | head
 instant  weekday  workingday  weathersit  temp       atemp      hum       windspeed  casual  registered  cnt   int($1)+int($2)
 1        6        0           2           0.344167   0.363625   0.805833  0.160446   331     654         985   7
 2        0        0           2           0.363478   0.353739   0.696087  0.248539   131     670         801   2
@@ -146,7 +148,7 @@ instant  weekday  workingday  weathersit  temp       atemp      hum       windsp
 ### reorder columns
 
 ```
-$ cat data.tsv | tsvkit -r 2,3,1,1 -v | head
+$ cat data/data.tsv | tsvkit -r 2,3,1,1 -v | head
 weekday  workingday  instant  instant
 6        0           1        1
 0        0           2        2
@@ -162,7 +164,7 @@ weekday  workingday  instant  instant
 ###  all functions support CSV, XLS and XLSX, by specifying the file name
 
 ```
-$ tsvkit data.xlsx -r 2,3,1,1 -v | head
+$ tsvkit data/data.xlsx -r 2,3,1,1 -v | head
 weekday  workingday  instant  instant
 6        0           1        1
 0        0           2        2
