@@ -5,7 +5,7 @@ TSV toolkit: print header, aligned display, descriptive statistics, pattern matc
 ## Installation
 
 ```
-pip install tsvkit==0.5.4
+pip install tsvkit==0.5.5
 ```
 
 ## Usage
@@ -16,7 +16,7 @@ usage: tsvkit [-h] [-H] [-v] [-s] [-p PATTERN] [-a ADD] [-r REORDER]
               [-w WIDTH] [-n NLINES] [-V]
               [input]
 
-TSV toolkit 0.5.4
+TSV toolkit 0.5.5
 
 positional arguments:
   input                 file to parse, tab-delimited, default: stdin

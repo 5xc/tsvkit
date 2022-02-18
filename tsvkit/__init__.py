@@ -1,5 +1,6 @@
 import argparse
 import csv
+import io
 import math
 import re
 import sys
@@ -10,7 +11,9 @@ from unicodedata import east_asian_width
 from openpyxl import load_workbook
 from xlrd import open_workbook, xldate_as_tuple
 
-__version__ = "0.5.4"
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
+
+__version__ = "0.5.5"
 
 if sys.platform != "win32":
     import signal
@@ -70,37 +73,36 @@ def get_stats(file, header: bool):
         yield f"{item:6s}\t{out}"
 
 
-def get_length(string: str) -> int:
-    length = 0
-    for char in string:
-        if east_asian_width(char) in "FW":
-            length += 2
-        else:
-            length += 1
-    return length
-
-
 def get_view(file, width: int, nlines: int):
     rows = []
-    widths = []
+    columns = []
     for i, line in enumerate(file, start=1):
         row = line.strip().split("\t")
         for index, string in enumerate(row):
-            length = get_length(string)
-            if len(widths) <= index:
-                widths.append(length)
-            widths[index] = min(width, max(length, widths[index]))
+            length = sum(1 for char in string if east_asian_width(char) in "FW") + len(string)
+            if len(columns) <= index:
+                columns.append(length)
+            columns[index] = min(width, max(length, columns[index]))
         rows.append(row)
         if nlines and i == nlines:
             break
     for row in rows:
         out_row = []
         for index, string in enumerate(row):
-            length = get_length(string)
-            if length < widths[index]:
-                row[index] = string + " " * (widths[index] - length)
+            length = sum(1 for char in string if east_asian_width(char) in "FW") + len(string)
+            if length <= columns[index]:
+                row[index] = string + " " * (columns[index] - length)
             else:
-                row[index] = string[:widths[index]]
+                w = 0
+                chars = []
+                for char in string:
+                    w += 2 if east_asian_width(char) in "FW" else 1
+                    if w <= columns[index]:
+                        chars.append(char)
+                    else:
+                        w -= 2 if east_asian_width(char) in "FW" else 1
+                        break
+                row[index] = "".join(chars) + " " * (columns[index] - w)
             out_row.append(row[index])
         yield "  ".join(out_row)
 
